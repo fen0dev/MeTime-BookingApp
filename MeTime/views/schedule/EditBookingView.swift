@@ -73,41 +73,81 @@ struct EditBookingView: View {
                     .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
                     
                     // Navigation Buttons
-                    HStack {
+                    HStack(spacing: 16) {
                         if currentStep > 1 {
-                            Button("Back") {
-                                withAnimation {
+                            Button(action: {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                     currentStep -= 1
                                 }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 14, weight: .semibold))
+                                    Text("Back")
+                                        .fontWeight(.medium)
+                                }
+                                .foregroundColor(ColorTheme.primary)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(ColorTheme.secondary.opacity(0.2))
+                                )
                             }
-                            .foregroundColor(ColorTheme.accent)
                         }
                         
                         Spacer()
                         
                         if currentStep < 5 {
-                            Button("Next") {
+                            Button(action: {
                                 if validateCurrentStep() {
-                                    withAnimation {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                         currentStep += 1
                                     }
                                 }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Text("Next")
+                                        .fontWeight(.semibold)
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 25)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(ColorTheme.accent)
+                                )
+                                .shadow(color: ColorTheme.accent.opacity(0.3), radius: 8, x: 0, y: 4)
                             }
-                            .foregroundColor(ColorTheme.accent)
-                            .fontWeight(.semibold)
                         } else {
-                            Button("Save Changes") {
-                                saveChanges()
+                            Button(action: saveChanges) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 16))
+                                    Text("Save Changes")
+                                        .fontWeight(.semibold)
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 30)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [ColorTheme.accent, ColorTheme.primary],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                )
+                                .shadow(color: ColorTheme.accent.opacity(0.3), radius: 10, x: 0, y: 5)
                             }
-                            .foregroundColor(.white)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 30)
-                            .padding(.vertical, 12)
-                            .background(ColorTheme.accent)
-                            .cornerRadius(25)
                         }
                     }
-                    .padding()
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
                 }
             }
             .navigationTitle("Edit Booking")
@@ -226,7 +266,7 @@ struct EditBookingView: View {
                                 Text("Total Price")
                                     .foregroundColor(ColorTheme.secondary)
                                 Spacer()
-                                Text("$\(totalPrice)")
+                                Text("\(totalPrice) kr")
                                     .fontWeight(.bold)
                                     .foregroundColor(ColorTheme.accent)
                             }
@@ -462,7 +502,7 @@ struct EditBookingView: View {
                                     HStack {
                                         Text("\(service.emoji) \(service.name)")
                                         Spacer()
-                                        Text("$\(service.price)")
+                                        Text("\(service.price) kr")
                                             .foregroundColor(ColorTheme.accent)
                                     }
                                     .font(.footnote)
@@ -499,7 +539,7 @@ struct EditBookingView: View {
                                 Text("Total")
                                     .font(.headline)
                                 Spacer()
-                                Text("$\(totalPrice)")
+                                Text("\(totalPrice) kr")
                                     .font(.headline)
                                     .foregroundColor(ColorTheme.accent)
                             }
@@ -521,28 +561,63 @@ struct EditBookingView: View {
         
         var body: some View {
             Button(action: action) {
-                HStack {
-                    Text("\(service.emoji) \(service.name)")
-                        .foregroundColor(ColorTheme.textPrimary)
+                HStack(spacing: 16) {
+                    // Service Emoji
+                    Text(service.emoji)
+                        .font(.system(size: 28))
+                        .frame(width: 40, height: 40)
+                    
+                    // Service Details
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(service.name)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(ColorTheme.textPrimary)
+                        
+                        HStack(spacing: 12) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 12))
+                                Text("\(service.duration) min")
+                                    .font(.system(size: 13))
+                            }
+                            .foregroundColor(ColorTheme.secondary)
+                            
+                            HStack(spacing: 4) {
+                                Image(systemName: "creditcard")
+                                    .font(.system(size: 12))
+                                Text("\(Int(service.price)) kr")
+                                    .font(.system(size: 13, weight: .semibold))
+                            }
+                            .foregroundColor(ColorTheme.accent)
+                        }
+                    }
                     
                     Spacer()
                     
-                    VStack(alignment: .trailing) {
-                        Text("$\(service.price)")
-                            .fontWeight(.semibold)
-                            .foregroundColor(ColorTheme.accent)
-                        Text("\(service.duration) min")
-                            .font(.caption)
-                            .foregroundColor(ColorTheme.secondary)
+                    // Selection Indicator
+                    ZStack {
+                        Circle()
+                            .stroke(isSelected ? ColorTheme.accent : ColorTheme.secondary.opacity(0.5), lineWidth: 2)
+                            .frame(width: 24, height: 24)
+                        
+                        if isSelected {
+                            Circle()
+                                .fill(ColorTheme.accent)
+                                .frame(width: 16, height: 16)
+                        }
                     }
-                    
-                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(isSelected ? ColorTheme.accent : ColorTheme.secondary)
                 }
-                .padding()
-                .background(isSelected ? ColorTheme.accent.opacity(0.1) : Color.clear)
-                .cornerRadius(10)
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isSelected ? ColorTheme.accent.opacity(0.08) : ColorTheme.surface)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(isSelected ? ColorTheme.accent.opacity(0.3) : ColorTheme.secondary.opacity(0.1), lineWidth: 1)
+                        )
+                )
             }
+            .buttonStyle(PlainButtonStyle())
         }
     }
     
@@ -554,34 +629,51 @@ struct EditBookingView: View {
         
         var body: some View {
             Button(action: action) {
-                VStack(spacing: 4) {
+                VStack(spacing: 6) {
                     Text(formatTime(timeSlot.startTime))
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 15, weight: .semibold))
+                    
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(isSelected ? .white.opacity(0.8) : ColorTheme.secondary)
+                    
                     Text(formatTime(timeSlot.endTime))
-                        .font(.system(size: 12))
-                        .foregroundColor(isOriginal ? ColorTheme.accent : ColorTheme.secondary)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(isSelected ? .white.opacity(0.9) : ColorTheme.secondary)
                     
                     if isOriginal {
                         Text("Current")
-                            .font(.system(size: 10))
-                            .foregroundColor(ColorTheme.accent)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(isSelected ? .white : ColorTheme.accent)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule()
+                                    .fill(isSelected ? .white.opacity(0.2) : ColorTheme.accent.opacity(0.1))
+                            )
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, minHeight: 80)
+                .padding(.vertical, 8)
                 .background(
-                    isSelected ? ColorTheme.accent : ColorTheme.secondary.opacity(0.3)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isSelected ? ColorTheme.accent : ColorTheme.surface)
+                        .shadow(color: isSelected ? ColorTheme.accent.opacity(0.3) : .clear, 
+                               radius: isSelected ? 8 : 0, x: 0, y: 4)
                 )
                 .foregroundColor(
                     isSelected ? .white : ColorTheme.textPrimary
                 )
-                .cornerRadius(10)
                 .overlay(
-                    isOriginal ? 
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(ColorTheme.accent, lineWidth: 2)
-                    : nil
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            isOriginal && !isSelected ? ColorTheme.accent : 
+                            isSelected ? Color.clear : ColorTheme.secondary.opacity(0.2),
+                            lineWidth: isOriginal && !isSelected ? 2 : 1
+                        )
                 )
+                .scaleEffect(isSelected ? 1.02 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
             }
         }
         
@@ -748,32 +840,49 @@ struct EditBookingView: View {
         let currentStep: Int
         
         var body: some View {
-            HStack(spacing: 20) {
-                ForEach(1...5, id: \.self) { step in
-                    VStack(spacing: 5) {
-                        Circle()
-                            .fill(step <= currentStep ? ColorTheme.accent : ColorTheme.secondary)
-                            .frame(width: 25, height: 25)
-                            .overlay(
-                                Text("\(step)")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(step <= currentStep ? .white : ColorTheme.secondary)
-                            )
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    ForEach(1...5, id: \.self) { step in
+                        VStack(spacing: 8) {
+                            ZStack {
+                                Circle()
+                                    .fill(step <= currentStep ? ColorTheme.accent : ColorTheme.secondary.opacity(0.3))
+                                    .frame(width: 32, height: 32)
+                                    .shadow(color: step <= currentStep ? ColorTheme.accent.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+                                
+                                if step < currentStep {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.white)
+                                } else {
+                                    Text("\(step)")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(step <= currentStep ? .white : ColorTheme.secondary)
+                                }
+                            }
+                            
+                            Text(stepTitle(for: step))
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(step <= currentStep ? ColorTheme.textPrimary : ColorTheme.secondary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        .frame(width: geometry.size.width / 5)
                         
-                        Text(stepTitle(for: step))
-                            .font(.system(size: 10))
-                            .foregroundColor(step <= currentStep ? ColorTheme.textPrimary : ColorTheme.secondary)
-                    }
-                    
-                    if step < 5 {
-                        Rectangle()
-                            .fill(step < currentStep ? ColorTheme.accent : ColorTheme.secondary)
-                            .frame(height: 2)
+                        if step < 5 {
+                            VStack {
+                                Rectangle()
+                                    .fill(step < currentStep ? ColorTheme.accent : ColorTheme.secondary.opacity(0.3))
+                                    .frame(height: 2)
+                                    .frame(maxWidth: .infinity)
+                                    .offset(y: -20)
+                            }
                             .frame(maxWidth: .infinity)
+                        }
                     }
                 }
             }
+            .frame(height: 60)
         }
         
         func stepTitle(for step: Int) -> String {
