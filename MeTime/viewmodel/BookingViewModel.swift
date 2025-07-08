@@ -21,6 +21,7 @@ class BookingViewModel: ObservableObject {
     
     private let eventStore = EKEventStore()
     private let db = Firestore.firestore()
+    private let webDomain = "https://mybeautycrave.com"
     
     init() {
         loadSchedules()
@@ -47,7 +48,7 @@ class BookingViewModel: ObservableObject {
     }
     
     func generateLink(for schedule: DaySchedule) -> String {
-        return "https://mybeautycrave.com/book/\(schedule.uniqueLink)"
+        return "\(webDomain)/book/\(schedule.uniqueLink)"
     }
     
     func copyLinkToClipboard(for schedule: DaySchedule) {

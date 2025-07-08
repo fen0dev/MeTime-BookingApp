@@ -463,7 +463,7 @@
             projectId: "mybeautycrave-metime",
             storageBucket: "mybeautycrave-metime.firebasestorage.app",
             messagingSenderId: "559859805862",
-            appId: "1:559859805862:ios:07106455f60e0af9d60e67"
+            appId: "1:559859805862:web:ab0cce706943e897d60e67"
         };
         
         // Initialize Firebase
@@ -675,7 +675,7 @@
         function getAvailableSlots() {
             const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
             const closingTime = new Date(scheduleData.date.seconds * 1000);
-            closingTime.setHours(19, 0, 0, 0);
+            closingTime.setHours(22, 0, 0, 0);
             
             return scheduleData.timeSlots.filter(slot => {
                 if (slot.isBooked) return false;
@@ -733,6 +733,11 @@
                         <label>Phone Number</label>
                         <input type="tel" id="customerPhone" value="${customerData.phone}" 
                                placeholder="Enter your phone number">
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="smsOptIn" checked>
+                            <span>Send me SMS appointment reminders</span>
                     </div>
                 </div>
                 
