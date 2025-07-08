@@ -3,11 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Your Beauty Appointment ✨</title>
+    <title>Book Your Beauty Appointment ✨ | MyBeautyCrave</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Book your nail and beauty appointments at MyBeautyCrave. Professional manicure, pedicure, gel nails, lash lift, and eyebrow lamination services.">
+    <meta property="og:title" content="Book Your Beauty Appointment at MyBeautyCrave">
+    <meta property="og:description" content="Professional nail and beauty services. Book your appointment now!">
+    <meta property="og:image" content="/assets/og-image.jpg">
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
     
     <style>
         * {
@@ -25,6 +32,9 @@
             --text-primary: #404040;
             --text-secondary: #666;
             --shadow: rgba(255, 105, 180, 0.1);
+            --success: #4CAF50;
+            --error: #f44336;
+            --warning: #ff9800;
         }
         
         body {
@@ -230,7 +240,8 @@
             color: var(--text-primary);
         }
         
-        .form-group input {
+        .form-group input,
+        .form-group textarea {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid var(--secondary);
@@ -238,12 +249,50 @@
             font-size: 1em;
             transition: all 0.3s ease;
             background: white;
+            font-family: inherit;
         }
         
-        .form-group input:focus {
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.1);
+        }
+        
+        .form-group.error input,
+        .form-group.error textarea {
+            border-color: var(--error);
+        }
+        
+        .error-message {
+            color: var(--error);
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            margin-top: 3px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            cursor: pointer;
+            font-size: 0.95em;
+            line-height: 1.4;
         }
         
         .summary {
@@ -323,6 +372,20 @@
             color: var(--text-secondary);
         }
         
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 182, 193, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
         .error {
             background: #fee;
             color: #c33;
@@ -358,6 +421,41 @@
         .success-icon {
             font-size: 4em;
             margin-bottom: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            max-width: 300px;
+            z-index: 999;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            border-left: 4px solid var(--success);
+        }
+        
+        .notification.error {
+            border-left: 4px solid var(--error);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
         
         @keyframes fadeInDown {
@@ -442,7 +540,10 @@
         </div>
         
         <div id="content">
-            <div class="loading">Loading booking information...</div>
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading booking information...</p>
+            </div>
         </div>
     </div>
     
@@ -450,13 +551,18 @@
         <div class="success-content">
             <div class="success-icon">🎉</div>
             <h2>Booking Confirmed!</h2>
-            <p>Your appointment has been successfully booked. You'll receive a confirmation soon.</p>
+            <p>Your appointment has been successfully booked.</p>
+            <p id="confirmationMessage">You'll receive a confirmation email shortly.</p>
             <button class="btn btn-primary" onclick="closeSuccessModal()">Done</button>
         </div>
     </div>
     
+    <div class="notification" id="notification">
+        <span id="notificationMessage"></span>
+    </div>
+    
     <script>
-        // Firebase configuration - Replace with your config
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAAXmsDu8u2F5UIDu752IthVh652JXH-zM",
             authDomain: "mybeautycrave-metime.firebaseapp.com",
@@ -469,14 +575,15 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const functions = firebase.functions();
         
         // Services data
         const services = [
-            { id: 1, name: "Manicure", duration: 45, price: 35, emoji: "💅" },
-            { id: 2, name: "Pedicure", duration: 90, price: 45, emoji: "🦶" },
-            { id: 3, name: "Gel Nails Extension", duration: 120, price: 65, emoji: "✨" },
-            { id: 4, name: "Lash Lift", duration: 60, price: 55, emoji: "👁" },
-            { id: 5, name: "Eyebrows Lamination", duration: 45, price: 40, emoji: "🤩" }
+            { id: 1, name: "Manicure", duration: 45, price: 35, emoji: "💅", description: "Classic manicure with polish" },
+            { id: 2, name: "Pedicure", duration: 90, price: 45, emoji: "🦶", description: "Relaxing pedicure treatment" },
+            { id: 3, name: "Gel Nails Extension", duration: 120, price: 65, emoji: "✨", description: "Long-lasting gel extensions" },
+            { id: 4, name: "Lash Lift", duration: 60, price: 55, emoji: "👁", description: "Natural lash enhancement" },
+            { id: 5, name: "Eyebrows Lamination", duration: 45, price: 40, emoji: "🤩", description: "Perfect brow shaping" }
         ];
         
         // State
@@ -484,15 +591,44 @@
         let scheduleData = null;
         let selectedServices = [];
         let selectedTimeSlot = null;
-        let customerData = { name: '', phone: '' };
+        let customerData = { name: '', phone: '', email: '', notes: '', smsOptIn: true };
         
         // Get schedule ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const scheduleId = urlParams.get('id') || window.location.pathname.split('/').pop();
         
+        // Utility Functions
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const messageEl = document.getElementById('notificationMessage');
+            
+            messageEl.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'flex';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+        
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        function validatePhone(phone) {
+            const re = /^\+?[\d\s\-()]+$/;
+            return re.test(phone) && phone.replace(/\D/g, '').length >= 10;
+        }
+        
         // Load schedule data
         async function loadSchedule() {
             try {
+                if (!scheduleId) {
+                    showError('Invalid booking link');
+                    return;
+                }
+                
                 const doc = await db.collection('schedules').doc(scheduleId).get();
                 
                 if (!doc.exists) {
@@ -574,6 +710,9 @@
                         <span class="service-emoji">${service.emoji}</span>
                         <div class="service-details">
                             <div class="service-name">${service.name}</div>
+                            <div style="font-size: 0.85em; color: var(--text-secondary); margin: 2px 0;">
+                                ${service.description}
+                            </div>
                             <div class="service-info">
                                 <span>⏱ ${service.duration} min</span>
                                 <span>💵 $${service.price}</span>
@@ -724,20 +863,33 @@
             let html = `
                 <div class="card">
                     <h2>Your Information</h2>
-                    <div class="form-group">
-                        <label>Your Name</label>
+                    <div class="form-group" id="nameGroup">
+                        <label>Your Name *</label>
                         <input type="text" id="customerName" value="${customerData.name}" 
-                               placeholder="Enter your name">
+                               placeholder="Enter your name" onblur="validateField('name')">
+                        <div class="error-message" id="nameError"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Phone Number</label>
+                    <div class="form-group" id="phoneGroup">
+                        <label>Phone Number *</label>
                         <input type="tel" id="customerPhone" value="${customerData.phone}" 
-                               placeholder="Enter your phone number">
+                               placeholder="(555) 123-4567" onblur="validateField('phone')">
+                        <div class="error-message" id="phoneError"></div>
+                    </div>
+                    <div class="form-group" id="emailGroup">
+                        <label>Email Address *</label>
+                        <input type="email" id="customerEmail" value="${customerData.email}" 
+                               placeholder="your@email.com" onblur="validateField('email')">
+                        <div class="error-message" id="emailError"></div>
                     </div>
                     <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" id="smsOptIn" checked>
-                            <span>Send me SMS appointment reminders</span>
+                        <label>Special Notes (Optional)</label>
+                        <textarea id="customerNotes" placeholder="Any special requests or notes...">${customerData.notes}</textarea>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="smsOptIn" ${customerData.smsOptIn ? 'checked' : ''}>
+                        <label for="smsOptIn">
+                            Send me SMS appointment reminders (standard rates may apply)
+                        </label>
                     </div>
                 </div>
                 
@@ -776,16 +928,92 @@
             document.getElementById('content').innerHTML = html;
         }
         
+        function validateField(field) {
+            const groups = {
+                name: 'nameGroup',
+                phone: 'phoneGroup',
+                email: 'emailGroup'
+            };
+            
+            const errors = {
+                name: 'nameError',
+                phone: 'phoneError',
+                email: 'emailError'
+            };
+            
+            const values = {
+                name: document.getElementById('customerName').value.trim(),
+                phone: document.getElementById('customerPhone').value.trim(),
+                email: document.getElementById('customerEmail').value.trim()
+            };
+            
+            const group = document.getElementById(groups[field]);
+            const errorEl = document.getElementById(errors[field]);
+            
+            let isValid = true;
+            let errorMessage = '';
+            
+            switch(field) {
+                case 'name':
+                    if (!values.name) {
+                        isValid = false;
+                        errorMessage = 'Name is required';
+                    }
+                    break;
+                case 'phone':
+                    if (!values.phone) {
+                        isValid = false;
+                        errorMessage = 'Phone number is required';
+                    } else if (!validatePhone(values.phone)) {
+                        isValid = false;
+                        errorMessage = 'Please enter a valid phone number';
+                    }
+                    break;
+                case 'email':
+                    if (!values.email) {
+                        isValid = false;
+                        errorMessage = 'Email is required';
+                    } else if (!validateEmail(values.email)) {
+                        isValid = false;
+                        errorMessage = 'Please enter a valid email address';
+                    }
+                    break;
+            }
+            
+            if (isValid) {
+                group.classList.remove('error');
+                errorEl.textContent = '';
+            } else {
+                group.classList.add('error');
+                errorEl.textContent = errorMessage;
+            }
+            
+            return isValid;
+        }
+        
         async function confirmBooking() {
             const name = document.getElementById('customerName').value.trim();
             const phone = document.getElementById('customerPhone').value.trim();
+            const email = document.getElementById('customerEmail').value.trim();
+            const notes = document.getElementById('customerNotes').value.trim();
+            const smsOptIn = document.getElementById('smsOptIn').checked;
             
-            if (!name || !phone) {
-                alert('Please fill in all fields');
+            // Validate all fields
+            const isNameValid = validateField('name');
+            const isPhoneValid = validateField('phone');
+            const isEmailValid = validateField('email');
+            
+            if (!isNameValid || !isPhoneValid || !isEmailValid) {
+                showNotification('Please fill in all required fields correctly', 'error');
                 return;
             }
             
-            customerData = { name, phone };
+            customerData = { name, phone, email, notes, smsOptIn };
+            
+            // Show loading state
+            const button = event.target;
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner" style="width: 20px; height: 20px; border-width: 3px;"></span> Booking...';
             
             try {
                 // Update the time slot
@@ -793,7 +1021,11 @@
                 scheduleData.timeSlots[slotIndex].isBooked = true;
                 scheduleData.timeSlots[slotIndex].customerName = name;
                 scheduleData.timeSlots[slotIndex].customerPhone = phone;
+                scheduleData.timeSlots[slotIndex].customerEmail = email;
+                scheduleData.timeSlots[slotIndex].notes = notes;
+                scheduleData.timeSlots[slotIndex].smsOptIn = smsOptIn;
                 scheduleData.timeSlots[slotIndex].services = selectedServices;
+                scheduleData.timeSlots[slotIndex].bookingDate = new Date();
                 
                 // Mark subsequent slots as booked
                 const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
@@ -811,18 +1043,26 @@
                     timeSlots: scheduleData.timeSlots
                 });
                 
+                // Update confirmation message based on email status
+                document.getElementById('confirmationMessage').textContent = 
+                    'You\'ll receive a confirmation email at ' + email + ' shortly.';
+                
                 // Show success
                 document.getElementById('successModal').style.display = 'flex';
             } catch (error) {
                 console.error('Error booking appointment:', error);
-                alert('Error booking appointment. Please try again.');
+                showNotification('Error booking appointment. Please try again.', 'error');
+                
+                // Reset button
+                button.disabled = false;
+                button.innerHTML = '<span>✓</span> Book Appointment';
             }
         }
         
         function closeSuccessModal() {
             document.getElementById('successModal').style.display = 'none';
-            // Optionally redirect or close the page
-            window.location.href = 'index.html';
+            // Redirect to a thank you page or home
+            window.location.href = '/';
         }
         
         // Initialize
