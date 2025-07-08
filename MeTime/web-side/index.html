@@ -458,12 +458,12 @@
     <script>
         // Firebase configuration - Replace with your config
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAAXmsDu8u2F5UIDu752IthVh652JXH-zM",
+            authDomain: "mybeautycrave-metime.firebaseapp.com",
+            projectId: "mybeautycrave-metime",
+            storageBucket: "mybeautycrave-metime.firebasestorage.app",
+            messagingSenderId: "559859805862",
+            appId: "1:559859805862:ios:07106455f60e0af9d60e67"
         };
         
         // Initialize Firebase
@@ -487,8 +487,8 @@
         let customerData = { name: '', phone: '' };
         
         // Get schedule ID from URL
-        const pathParts = window.location.pathname.split('/');
-        const scheduleId = pathParts[pathParts.length - 1];
+        const urlParams = new URLSearchParams(window.location.search);
+        const scheduleId = urlParams.get('id') || window.location.pathname.split('/').pop();
         
         // Load schedule data
         async function loadSchedule() {

@@ -11,7 +11,7 @@ struct DaySchedule: Identifiable, Codable {
     var id = UUID()
     let date: Date
     var timeSlots: [TimeSlot]
-    let uniqueLink: String
+    var uniqueLink: String
     
     init(date: Date) {
         self.date = date
@@ -25,7 +25,7 @@ struct DaySchedule: Identifiable, Codable {
         
         // generate slots from 9 am to 10 pm with 15-minute intervals
         for hour in 9...22 {
-            for minute in stride(from: 0, to: 60, by: 0) {
+            for minute in stride(from: 0, to: 60, by: 15) { // Changed from 0 to 15
                 var components = calendar.dateComponents([.year, .month, .day], from: date)
                 components.hour = hour
                 components.minute = minute

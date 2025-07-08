@@ -97,6 +97,14 @@ struct ScheduleDetailView: View {
                                 }
                             }
                             .padding(.horizontal)
+                            .containerShape(Rectangle())
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    viewModel.cancelBooking(scheduleId: schedule.uniqueLink, slotId: slot.id)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                     }
                 }

@@ -34,6 +34,14 @@ struct ContentView: View {
                     }
                     .padding(.top)
                     
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .tint(Color.theme.accent)
+                            .scaleEffect(1.5)
+                            .padding()
+                    }
+                    
                     ScrollView {
                         VStack(spacing: 15) {
                             ForEach(viewModel.schedules.sorted(by: { $0.date < $1.date })) { schedule in
