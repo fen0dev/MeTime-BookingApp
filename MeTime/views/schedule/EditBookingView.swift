@@ -275,6 +275,7 @@ struct EditBookingView: View {
                     .padding(.horizontal)
                 }
             }
+            .padding(.bottom)
         }
     }
     
