@@ -186,7 +186,16 @@ struct EditBookingView: View {
                                 .foregroundColor(ColorTheme.secondary)
                             
                             TextField("Customer name", text: $customerName)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .foregroundColor(ColorTheme.textPrimary)
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(ColorTheme.surface)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(ColorTheme.secondary.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -195,8 +204,17 @@ struct EditBookingView: View {
                                 .foregroundColor(ColorTheme.secondary)
                             
                             TextField("Phone number", text: $customerPhone)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .foregroundColor(ColorTheme.textPrimary)
                                 .keyboardType(.phonePad)
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(ColorTheme.surface)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(ColorTheme.secondary.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -205,9 +223,18 @@ struct EditBookingView: View {
                                 .foregroundColor(ColorTheme.secondary)
                             
                             TextField("Email address", text: $customerEmail)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .foregroundColor(ColorTheme.textPrimary)
                                 .keyboardType(.emailAddress)
                                 .textInputAutocapitalization(.never)
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(ColorTheme.surface)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(ColorTheme.secondary.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
@@ -216,10 +243,17 @@ struct EditBookingView: View {
                                 .foregroundColor(ColorTheme.secondary)
                             
                             TextEditor(text: $notes)
+                                .foregroundColor(ColorTheme.textPrimary)
                                 .frame(height: 80)
                                 .padding(8)
-                                .background(ColorTheme.secondary.opacity(0.3))
-                                .cornerRadius(8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(ColorTheme.surface)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 10)
+                                                .stroke(ColorTheme.secondary.opacity(0.3), lineWidth: 1)
+                                        )
+                                )
                         }
                     }
                 }
@@ -503,7 +537,7 @@ struct EditBookingView: View {
                                     HStack {
                                         Text("\(service.emoji) \(service.name)")
                                         Spacer()
-                                        Text("\(service.price) kr")
+                                        Text("\(Int(service.price)) kr")
                                             .foregroundColor(ColorTheme.accent)
                                     }
                                     .font(.footnote)
@@ -540,7 +574,7 @@ struct EditBookingView: View {
                                 Text("Total")
                                     .font(.headline)
                                 Spacer()
-                                Text("\(totalPrice) kr")
+                                Text("\(Int(totalPrice)) kr")
                                     .font(.headline)
                                     .foregroundColor(ColorTheme.accent)
                             }

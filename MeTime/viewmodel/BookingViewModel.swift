@@ -302,20 +302,68 @@ class BookingViewModel: ObservableObject {
         let totalDuration = slot.services.reduce(0) { $0 + $1.duration }
         let slotsToFree = Int(ceil(Double(totalDuration) / 15.0))
         
-        // free this slot and subsequent slots
-        for i in 0..<slotsToFree {
-            let index = slotIndex + i
-            if index < schedules[scheduleIndex].timeSlots.count {
-                schedules[scheduleIndex].timeSlots[index].isBooked = false
-                schedules[scheduleIndex].timeSlots[index].customerName = nil
-                schedules[scheduleIndex].timeSlots[index].customerPhone = nil
-                schedules[scheduleIndex].timeSlots[index].services = []
+        // Use Firestore transaction to ensure atomic update
+        let scheduleRef = db.collection("schedules").document(scheduleId)
+        
+        db.runTransaction({ (transaction, errorPointer) -> Any? in
+            let scheduleDocument: DocumentSnapshot
+            do {
+                try scheduleDocument = transaction.getDocument(scheduleRef)
+            } catch let fetchError as NSError {
+                errorPointer?.pointee = fetchError
+                return nil
+            }
+            
+            guard let data = scheduleDocument.data(),
+                  var timeSlotsData = data["timeSlots"] as? [[String: Any]] else {
+                return nil
+            }
+            
+            // Free this slot and subsequent slots
+            for i in 0..<slotsToFree {
+                let index = slotIndex + i
+                if index < timeSlotsData.count {
+                    timeSlotsData[index]["isBooked"] = false
+                    timeSlotsData[index]["customerName"] = ""
+                    timeSlotsData[index]["customerPhone"] = ""
+                    timeSlotsData[index]["customerEmail"] = ""
+                    timeSlotsData[index]["notes"] = ""
+                    timeSlotsData[index]["services"] = []
+                }
+            }
+            
+            transaction.updateData(["timeSlots": timeSlotsData], forDocument: scheduleRef)
+            return nil
+        }) { [weak self] (result, error) in
+            if let error = error {
+                print("Transaction failed: \(error)")
+                DispatchQueue.main.async {
+                    self?.showToast("Failed to cancel booking", icon: "exclamationmark.circle", type: .error)
+                }
+            } else {
+                // Update local state only after successful Firebase update
+                DispatchQueue.main.async {
+                    guard let self = self,
+                          let scheduleIndex = self.schedules.firstIndex(where: { $0.uniqueLink == scheduleId }),
+                          let slotIndex = self.schedules[scheduleIndex].timeSlots.firstIndex(where: { $0.id == slotId }) else { return }
+                    
+                    // Free this slot and subsequent slots locally
+                    for i in 0..<slotsToFree {
+                        let index = slotIndex + i
+                        if index < self.schedules[scheduleIndex].timeSlots.count {
+                            self.schedules[scheduleIndex].timeSlots[index].isBooked = false
+                            self.schedules[scheduleIndex].timeSlots[index].customerName = nil
+                            self.schedules[scheduleIndex].timeSlots[index].customerPhone = nil
+                            self.schedules[scheduleIndex].timeSlots[index].customerEmail = nil
+                            self.schedules[scheduleIndex].timeSlots[index].notes = nil
+                            self.schedules[scheduleIndex].timeSlots[index].services = []
+                        }
+                    }
+                    
+                    self.showToast("Booking cancelled", icon: "trash.fill", type: .info)
+                }
             }
         }
-        
-        saveSchedules(schedule: schedules[scheduleIndex])
-        
-        showToast("Booking cancelled", icon: "trash.fill", type: .info)
     }
     
     func updateBooking(scheduleId: String, originalSlot: TimeSlot, newSlot: TimeSlot,

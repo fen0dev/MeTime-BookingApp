@@ -16,6 +16,7 @@ struct MeTimeApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .accentColor(ColorTheme.accent)
                 .onOpenURL { url in
                     // Handle deep links for customer booking
                     if url.scheme == "nailbooking",

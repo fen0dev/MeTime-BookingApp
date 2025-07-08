@@ -102,7 +102,8 @@ struct ContentView: View {
                                             NavigationLink(destination: ScheduleDetailView(schedule: today, viewModel: viewModel)) {
                                                 Text("View Details")
                                                     .font(.caption)
-                                                    .foregroundColor(ColorTheme.primary)
+                                                    .fontWeight(.semibold)
+                                                    .foregroundColor(ColorTheme.accent)
                                             }
                                         }
                                         
@@ -213,6 +214,7 @@ struct ContentView: View {
                                         }
                                         .padding(.horizontal)
                                     }
+                                    .buttonStyle(PlainButtonStyle())
                                 }
                             }
                         }
