@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Your Beauty Appointment ✨</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #FFB6C1;
+            --secondary: #FFDAE0;
+            --accent: #FF69B4;
+            --background: #FFFAFA;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-primary: #404040;
+            --text-secondary: #666;
+            --shadow: rgba(255, 105, 180, 0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--background) 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            color: var(--accent);
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(255, 182, 193, 0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+        }
+        
+        .progress-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            animation: fadeIn 1s ease;
+        }
+        
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .progress-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-circle.active {
+            background: var(--accent);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+        
+        .progress-circle.completed {
+            background: var(--primary);
+        }
+        
+        .progress-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+        
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px var(--shadow);
+            border: 1px solid rgba(255, 182, 193, 0.2);
+            animation: fadeInUp 0.8s ease;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .service-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 15px;
+        }
+        
+        .service-item:hover {
+            background: rgba(255, 182, 193, 0.1);
+        }
+        
+        .service-item.selected {
+            background: rgba(255, 105, 180, 0.1);
+            border: 2px solid var(--accent);
+        }
+        
+        .service-emoji {
+            font-size: 2em;
+        }
+        
+        .service-details {
+            flex-grow: 1;
+        }
+        
+        .service-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        
+        .service-info {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 15px;
+        }
+        
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--secondary);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .checkbox.checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            position: relative;
+        }
+        
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .time-slot {
+            padding: 12px;
+            text-align: center;
+            background: rgba(255, 218, 224, 0.3);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .time-slot:hover {
+            background: rgba(255, 182, 193, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .time-slot.selected {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+        
+        .time-slot.unavailable {
+            background: #f0f0f0;
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--secondary);
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.1);
+        }
+        
+        .summary {
+            background: rgba(255, 182, 193, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .summary-row.total {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: var(--accent);
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px dashed var(--secondary);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--primary));
+            color: white;
+            box-shadow: 0 4px 16px var(--shadow);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--shadow);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 218, 224, 0.3);
+            color: var(--text-primary);
+            border: 2px solid var(--secondary);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--secondary);
+        }
+        
+        .navigation {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: var(--text-secondary);
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .success-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .success-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            margin: 20px;
+            animation: bounceIn 0.5s ease;
+        }
+        
+        .success-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .progress-indicator {
+                gap: 20px;
+            }
+            
+            .time-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ MyBeautyCrave ✨</h1>
+            <p id="dateDisplay">Loading...</p>
+        </div>
+        
+        <div class="progress-indicator">
+            <div class="progress-step">
+                <div class="progress-circle active" id="progress1">1</div>
+                <span class="progress-label">Services</span>
+            </div>
+            <div class="progress-step">
+                <div class="progress-circle" id="progress2">2</div>
+                <span class="progress-label">Time</span>
+            </div>
+            <div class="progress-step">
+                <div class="progress-circle" id="progress3">3</div>
+                <span class="progress-label">Details</span>
+            </div>
+        </div>
+        
+        <div id="content">
+            <div class="loading">Loading booking information...</div>
+        </div>
+    </div>
+    
+    <div class="success-modal" id="successModal">
+        <div class="success-content">
+            <div class="success-icon">🎉</div>
+            <h2>Booking Confirmed!</h2>
+            <p>Your appointment has been successfully booked. You'll receive a confirmation soon.</p>
+            <button class="btn btn-primary" onclick="closeSuccessModal()">Done</button>
+        </div>
+    </div>
+    
+    <script>
+        // Firebase configuration - Replace with your config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // Services data
+        const services = [
+            { id: 1, name: "Manicure", duration: 45, price: 35, emoji: "💅" },
+            { id: 2, name: "Pedicure", duration: 90, price: 45, emoji: "🦶" },
+            { id: 3, name: "Gel Nails Extension", duration: 120, price: 65, emoji: "✨" },
+            { id: 4, name: "Lash Lift", duration: 60, price: 55, emoji: "👁" },
+            { id: 5, name: "Eyebrows Lamination", duration: 45, price: 40, emoji: "🤩" }
+        ];
+        
+        // State
+        let currentStep = 1;
+        let scheduleData = null;
+        let selectedServices = [];
+        let selectedTimeSlot = null;
+        let customerData = { name: '', phone: '' };
+        
+        // Get schedule ID from URL
+        const pathParts = window.location.pathname.split('/');
+        const scheduleId = pathParts[pathParts.length - 1];
+        
+        // Load schedule data
+        async function loadSchedule() {
+            try {
+                const doc = await db.collection('schedules').doc(scheduleId).get();
+                
+                if (!doc.exists) {
+                    showError('Invalid booking link');
+                    return;
+                }
+                
+                scheduleData = doc.data();
+                scheduleData.id = doc.id;
+                
+                // Display date
+                const date = new Date(scheduleData.date.seconds * 1000);
+                document.getElementById('dateDisplay').textContent = 
+                    date.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                
+                showStep(1);
+            } catch (error) {
+                console.error('Error loading schedule:', error);
+                showError('Error loading booking information');
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('content').innerHTML = 
+                `<div class="error">${message}</div>`;
+        }
+        
+        function showStep(step) {
+            currentStep = step;
+            updateProgress();
+            
+            const content = document.getElementById('content');
+            
+            switch(step) {
+                case 1:
+                    showServicesStep();
+                    break;
+                case 2:
+                    showTimeStep();
+                    break;
+                case 3:
+                    showDetailsStep();
+                    break;
+            }
+        }
+        
+        function updateProgress() {
+            for (let i = 1; i <= 3; i++) {
+                const circle = document.getElementById(`progress${i}`);
+                if (i < currentStep) {
+                    circle.classList.add('completed');
+                    circle.classList.remove('active');
+                } else if (i === currentStep) {
+                    circle.classList.add('active');
+                    circle.classList.remove('completed');
+                } else {
+                    circle.classList.remove('active', 'completed');
+                }
+            }
+        }
+        
+        function showServicesStep() {
+            let html = `
+                <div class="card">
+                    <h2>Select Your Services</h2>
+                    <div style="margin-top: 20px;">
+            `;
+            
+            services.forEach(service => {
+                const isSelected = selectedServices.some(s => s.id === service.id);
+                html += `
+                    <div class="service-item ${isSelected ? 'selected' : ''}" 
+                         onclick="toggleService(${service.id})">
+                        <span class="service-emoji">${service.emoji}</span>
+                        <div class="service-details">
+                            <div class="service-name">${service.name}</div>
+                            <div class="service-info">
+                                <span>⏱ ${service.duration} min</span>
+                                <span>💵 $${service.price}</span>
+                            </div>
+                        </div>
+                        <div class="checkbox ${isSelected ? 'checked' : ''}"></div>
+                    </div>
+                `;
+            });
+            
+            html += `</div></div>`;
+            
+            if (selectedServices.length > 0) {
+                const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
+                const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+                
+                html += `
+                    <div class="card summary">
+                        <div class="summary-row">
+                            <span>Total Duration:</span>
+                            <span>${totalDuration} minutes</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total Price:</span>
+                            <span>$${totalPrice}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div class="navigation">
+                    <button class="btn btn-primary" 
+                            onclick="showStep(2)"
+                            ${selectedServices.length === 0 ? 'disabled' : ''}>
+                        Next <span>→</span>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function toggleService(serviceId) {
+            const service = services.find(s => s.id === serviceId);
+            const index = selectedServices.findIndex(s => s.id === serviceId);
+            
+            if (index >= 0) {
+                selectedServices.splice(index, 1);
+            } else {
+                selectedServices.push(service);
+            }
+            
+            showServicesStep();
+        }
+        
+        function showTimeStep() {
+            const availableSlots = getAvailableSlots();
+            
+            let html = `
+                <div class="card">
+                    <h2>Select Your Time</h2>
+                    <div class="time-grid">
+            `;
+            
+            if (availableSlots.length === 0) {
+                html += `<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">
+                         No available time slots for the selected services.</p>`;
+            } else {
+                availableSlots.forEach(slot => {
+                    const isSelected = selectedTimeSlot?.id === slot.id;
+                    html += `
+                        <div class="time-slot ${isSelected ? 'selected' : ''}" 
+                             onclick="selectTimeSlot('${slot.id}')">
+                            ${formatTime(slot.startTime)}
+                        </div>
+                    `;
+                });
+            }
+            
+            html += `
+                    </div>
+                </div>
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="showStep(1)">
+                        <span>←</span> Back
+                    </button>
+                    <button class="btn btn-primary" 
+                            onclick="showStep(3)"
+                            ${!selectedTimeSlot ? 'disabled' : ''}>
+                        Next <span>→</span>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function getAvailableSlots() {
+            const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
+            const closingTime = new Date(scheduleData.date.seconds * 1000);
+            closingTime.setHours(19, 0, 0, 0);
+            
+            return scheduleData.timeSlots.filter(slot => {
+                if (slot.isBooked) return false;
+                
+                const slotTime = new Date(slot.startTime.seconds * 1000);
+                const endTime = new Date(slotTime.getTime() + totalDuration * 60000);
+                
+                if (endTime > closingTime) return false;
+                
+                // Check for conflicts with other bookings
+                const slotIndex = scheduleData.timeSlots.findIndex(s => s.id === slot.id);
+                for (let i = slotIndex; i < scheduleData.timeSlots.length; i++) {
+                    const checkSlot = scheduleData.timeSlots[i];
+                    const checkTime = new Date(checkSlot.startTime.seconds * 1000);
+                    
+                    if (checkSlot.isBooked && checkTime < endTime) {
+                        return false;
+                    }
+                    if (checkTime >= endTime) break;
+                }
+                
+                return true;
+            });
+        }
+        
+        function selectTimeSlot(slotId) {
+            selectedTimeSlot = scheduleData.timeSlots.find(s => s.id === slotId);
+            showTimeStep();
+        }
+        
+        function formatTime(timestamp) {
+            const date = new Date(timestamp.seconds * 1000);
+            return date.toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+        
+        function showDetailsStep() {
+            const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+            const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
+            const startTime = new Date(selectedTimeSlot.startTime.seconds * 1000);
+            const endTime = new Date(startTime.getTime() + totalDuration * 60000);
+            
+            let html = `
+                <div class="card">
+                    <h2>Your Information</h2>
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" id="customerName" value="${customerData.name}" 
+                               placeholder="Enter your name">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" id="customerPhone" value="${customerData.phone}" 
+                               placeholder="Enter your phone number">
+                    </div>
+                </div>
+                
+                <div class="card summary">
+                    <h3>Booking Summary</h3>
+                    <div style="margin-top: 15px;">
+                        <div class="summary-row">
+                            <span>📅 Date:</span>
+                            <span>${startTime.toLocaleDateString()}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>⏰ Time:</span>
+                            <span>${formatTime(selectedTimeSlot.startTime)} - ${formatTime({seconds: endTime.getTime() / 1000})}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>✨ Services:</span>
+                            <span>${selectedServices.map(s => s.name).join(', ')}</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span>$${totalPrice}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="showStep(2)">
+                        <span>←</span> Back
+                    </button>
+                    <button class="btn btn-primary" onclick="confirmBooking()">
+                        <span>✓</span> Book Appointment
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        async function confirmBooking() {
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+            
+            if (!name || !phone) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            customerData = { name, phone };
+            
+            try {
+                // Update the time slot
+                const slotIndex = scheduleData.timeSlots.findIndex(s => s.id === selectedTimeSlot.id);
+                scheduleData.timeSlots[slotIndex].isBooked = true;
+                scheduleData.timeSlots[slotIndex].customerName = name;
+                scheduleData.timeSlots[slotIndex].customerPhone = phone;
+                scheduleData.timeSlots[slotIndex].services = selectedServices;
+                
+                // Mark subsequent slots as booked
+                const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0);
+                const slotsNeeded = Math.ceil(totalDuration / 15) - 1;
+                
+                for (let i = 1; i <= slotsNeeded; i++) {
+                    const nextIndex = slotIndex + i;
+                    if (nextIndex < scheduleData.timeSlots.length) {
+                        scheduleData.timeSlots[nextIndex].isBooked = true;
+                    }
+                }
+                
+                // Update Firebase
+                await db.collection('schedules').doc(scheduleId).update({
+                    timeSlots: scheduleData.timeSlots
+                });
+                
+                // Show success
+                document.getElementById('successModal').style.display = 'flex';
+            } catch (error) {
+                console.error('Error booking appointment:', error);
+                alert('Error booking appointment. Please try again.');
+            }
+        }
+        
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+            // Optionally redirect or close the page
+            window.location.href = 'index.html';
+        }
+        
+        // Initialize
+        loadSchedule();
+    </script>
+</body>
+</html>

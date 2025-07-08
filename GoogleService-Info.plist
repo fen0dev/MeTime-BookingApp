@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyAAXmsDu8u2F5UIDu752IthVh652JXH-zM</string>
+	<key>GCM_SENDER_ID</key>
+	<string>559859805862</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.MeTime.MeTime</string>
+	<key>PROJECT_ID</key>
+	<string>mybeautycrave-metime</string>
+	<key>STORAGE_BUCKET</key>
+	<string>mybeautycrave-metime.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true/>
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true/>
+	<key>New item</key>
+	<string></string>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:559859805862:ios:07106455f60e0af9d60e67</string>
+</dict>
+</plist>
