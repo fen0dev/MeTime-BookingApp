@@ -14,17 +14,17 @@ struct DatePickerView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color.theme.background.opacity(0.3)
+                ColorTheme.background.opacity(0.3)
                     .ignoresSafeArea()
                 
                 VStack {
                     DatePicker("", selection: $viewModel.selectedDate, displayedComponents: .date)
                         .datePickerStyle(GraphicalDatePickerStyle())
-                        .accentColor(Color.theme.accent)
+                        .accentColor(ColorTheme.accent)
                         .padding()
                         .background(Color.white.opacity(0.6))
                         .cornerRadius(20)
-                        .shadow(color: Color.theme.accent.opacity(0.1), radius: 10)
+                        .shadow(color: ColorTheme.accent.opacity(0.1), radius: 10)
                         .padding()
                     
                     Spacer()
@@ -36,12 +36,12 @@ struct DatePickerView: View {
                 leading: Button("Cancel") {
                     dismiss()
                 }
-                .foregroundColor(Color.theme.accent),
+                    .foregroundColor(ColorTheme.accent),
                 trailing: Button("Create") {
                     viewModel.createScheduleForDate(viewModel.selectedDate)
                     dismiss()
                 }
-                .foregroundColor(Color.theme.accent)
+                    .foregroundColor(ColorTheme.accent)
                 .fontWeight(.semibold)
             )
         }

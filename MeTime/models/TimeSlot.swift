@@ -13,6 +13,8 @@ struct TimeSlot: Identifiable, Codable {
     var isBooked: Bool = false
     var customerName: String?
     var customerPhone: String?
+    var customerEmail: String?
+    var notes: String?
     var services: [Service] = []
     var endTime: Date {
         let totalDuration = services.reduce(0) { $0 + $1.duration }

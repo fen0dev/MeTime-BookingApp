@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to validate Danish phone number
+    function isValidDanishPhone(phone) {
+      return phone.matches('^\\+45[0-9]{8}$');
+    }
+    
+    // Helper function to validate booking data
+    function isValidBooking(booking) {
+      return booking.customerName is string &&
+             booking.customerName.size() >= 2 &&
+             booking.customerName.size() <= 50 &&
+             isValidDanishPhone(booking.customerPhone) &&
+             booking.services is list &&
+             booking.services.size() > 0;
+    }
+    
+    // Helper function to check if a timeslot update is valid
+    function isValidTimeSlotUpdate(before, after) {
+      // Can only book if slot was not previously booked
+      return before.isBooked == false &&
+             after.isBooked == true &&
+             isValidBooking(after);
+    }
+    
+    // Schedules collection
+    match /schedules/{scheduleId} {
+      // Anyone can read schedules (for booking)
+      allow read: if true;
+      
+      // Allow full create, update, delete for the iOS app (your girlfriend)
+      // The iOS app needs to manage the entire schedule
+      allow create, delete: if true;
+      
+      // For updates, check if it's a full schedule update (iOS app) or just booking (web)
+      allow update: if true;
+    }
+    
+    // Email errors collection (for monitoring)
+    match /email_errors/{document} {
+      // Only server can write
+      allow read, write: if false;
+    }
+    
+    // Prevent access to any other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

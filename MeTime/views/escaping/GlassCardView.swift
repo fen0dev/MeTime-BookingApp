@@ -18,19 +18,32 @@ struct GlassCardView<Content: View>: View {
             .padding()
             .background {
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.white.opacity(0.9))
+                    .fill(ColorTheme.surface)
                     .background {
                         RoundedRectangle(cornerRadius: 20)
                             .stroke(
                                 LinearGradient(
-                                    colors: [Color.theme.primary.opacity(0.6), Color.theme.accent.opacity(0.3)],
+                                    colors: [ColorTheme.accent.opacity(0.2), ColorTheme.primary.opacity(0.1)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
                                 lineWidth: 1
                             )
                     }
-                    .shadow(color: Color.theme.accent.opacity(0.1), radius: 10, x: 0, y: 5)
+                    .shadow(color: ColorTheme.primary.opacity(0.15), radius: 10, x: 0, y: 5)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        ColorTheme.background.opacity(0.03),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .center
+                                )
+                            )
+                    )
             }
     }
 }
